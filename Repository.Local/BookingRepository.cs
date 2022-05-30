@@ -31,13 +31,20 @@ namespace Repository.Local
         public Task<bool> BookMeeting(DateTime date, TimeSpan startTime, TimeSpan endTime, int attendees)
         {
             var optimalMeetingRoom = FindOptimalMeetingRoom(attendees);
+
+            var result = _dbContext.Meeting.Any(x => x.Date == date &&
+                                                     x.StartTime <= startTime || x.EndTime >= startTime
+                                                     && x.StartTime <= endTime || x.EndTime >= endTime && x.RoomName == optimalMeetingRoom);
+
             var isRoomBooked =
                  _dbContext.Meeting.Any(x => x.Date == date && x.StartTime == startTime
                                                            && x.EndTime == endTime
                                                            && x.RoomName == optimalMeetingRoom);
             if (!isRoomBooked)
             {
-                return BookMeeting(date, startTime, endTime, optimalMeetingRoom);
+                var isOverLapping = IsOverLapping(date, startTime, endTime, optimalMeetingRoom);
+                if (!isOverLapping)
+                    return BookMeeting(date, startTime, endTime, optimalMeetingRoom);
             }
 
             if (attendees <= Convert.ToInt16(SagradaFamiliaCapacity))
@@ -46,7 +53,10 @@ namespace Repository.Local
                     Any(date, startTime, endTime, Room.Sagarda);
                 if (!isSagardaAvailable)
                 {
-                    return BookMeeting(date, startTime, endTime, Room.Sagarda);
+                    var isOverLapping = IsOverLapping(date, startTime, endTime, Room.Sagarda);
+
+                    if (!isOverLapping)
+                        return BookMeeting(date, startTime, endTime, Room.Sagarda);
                 }
             }
             if (attendees <= Convert.ToInt16(TajMahalCapacity))
@@ -55,7 +65,10 @@ namespace Repository.Local
                     Any(date, startTime, endTime, Room.TajMahal);
                 if (!isTajMahalAvailable)
                 {
-                    return BookMeeting(date, startTime, endTime, Room.TajMahal);
+                    var isOverLapping = IsOverLapping(date, startTime, endTime, Room.TajMahal);
+
+                    if (!isOverLapping)
+                        return BookMeeting(date, startTime, endTime, Room.TajMahal);
                 }
             }
 
@@ -63,7 +76,10 @@ namespace Repository.Local
                 Any(date, startTime, endTime, Room.Acropolis);
             if (!isAcropolisAvailable)
             {
-                return BookMeeting(date, startTime, endTime, Room.Acropolis);
+                var isOverLapping = IsOverLapping(date, startTime, endTime, Room.Acropolis);
+
+                if (!isOverLapping)
+                    return BookMeeting(date, startTime, endTime, Room.Acropolis);
             }
 
             return Task.FromResult(false);
@@ -78,18 +94,33 @@ namespace Repository.Local
 
             if (!isSagardaAvailable)
             {
-                availableRooms.Add(Room.Sagarda);
+                var isOverLapping = IsOverLapping(date, startTime, endTime, Room.Sagarda);
+                if (!isOverLapping)
+                    availableRooms.Add(Room.Sagarda);
             }
             if (!isTajMahalAvailable)
             {
-                availableRooms.Add(Room.TajMahal);
+                var isOverLapping = IsOverLapping(date, startTime, endTime, Room.TajMahal);
+                if (!isOverLapping)
+                    availableRooms.Add(Room.TajMahal);
             }
             if (!isAcropolisAvailable)
             {
-                availableRooms.Add(Room.Acropolis);
+                var isOverLapping = IsOverLapping(date, startTime, endTime, Room.Acropolis);
+                if (!isOverLapping)
+                    availableRooms.Add(Room.Acropolis);
             }
 
             return Task.FromResult(availableRooms);
+        }
+
+        private bool IsOverLapping(DateTime date, TimeSpan startTime, TimeSpan endTime, string roomName)
+        {
+            var isOverLapping = _dbContext.Meeting.Any(x => x.Date == date
+                                                            && (x.StartTime <= startTime && x.EndTime >= startTime)
+                                                            && (x.StartTime <= endTime && x.EndTime >= endTime)
+                                                            && x.RoomName == roomName);
+            return isOverLapping;
         }
 
         private Task<bool> BookMeeting(DateTime date, TimeSpan startTime, TimeSpan endTime, string optimalMeetingRoom)

@@ -16,6 +16,14 @@ namespace Api.Http.Controllers
             _bookingService = bookingService;
         }
 
+        /// <summary>
+        /// Book meeting room.
+        /// </summary>
+        /// <param name="date">date.</param>
+        /// <param name="start-time">start-time.</param>
+        /// <param name="end-time">end-time.</param>
+        /// <param name="attendees">attendees.</param>
+        /// <returns>Booking status.</returns>
         [HttpGet]
         [Route("book/date/{date}/start-time/{startTime}/end-time/{endTime}/attendees/{attendees}")]
         public ActionResult Book(DateTime date, string startTime, string endTime, int attendees)
@@ -39,6 +47,13 @@ namespace Api.Http.Controllers
             }
         }
 
+        /// <summary>
+        /// View Available meeting room.
+        /// </summary>
+        /// <param name="date">date.</param>
+        /// <param name="start-time">start-time.</param>
+        /// <param name="end-time">end-time.</param>
+        /// <returns>View Available meeting room status.</returns>
         [HttpGet]
         [Route("view/date/{date}/start-time/{startTime}/end-time/{endTime}")]
         public ActionResult<List<string>> View(DateTime date, string startTime, string endTime)
